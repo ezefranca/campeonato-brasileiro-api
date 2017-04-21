@@ -7,7 +7,7 @@ O **campeonato-brasileiro-api** é um módulo para consulta da tabela e rodadas 
 
 ## Instalação
 
-```npm install campeonato-brasileiro --save ```
+```npm install campeonato-brasileiro-api --save ```
 
 ## Exemplos
 
@@ -15,7 +15,7 @@ O **campeonato-brasileiro-api** é um módulo para consulta da tabela e rodadas 
 
 ```js
 
-const cb = require('campeonato-brasileiro');
+const cb = require('campeonato-brasileiro-api');
 
 const serie = 'a';
 
@@ -53,7 +53,7 @@ cb.tabela(serie).then(function(tabela) {
 
 ```js
 
-const cb = require('campeonato-brasileiro');
+const cb = require('campeonato-brasileiro-api');
 
 const serie = 'a';
 
