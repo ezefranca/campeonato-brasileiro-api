@@ -1,0 +1,25 @@
+{
+  "name": "campeonato-brasileiro-api",
+  "version": "1.0.0",
+  "description": "módulo para consulta da tabela e rodadas do campeonato brasileiro",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ezefranca/campeonato-brasileiro-api.git"
+  },
+  "keywords": [
+    "campeonato",
+    "brasileiro",
+    "futebol",
+    "brazil"
+  ],
+  "author": "Ezequiel França",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ezefranca/campeonato-brasileiro-api/issues"
+  },
+  "homepage": "https://github.com/ezefranca/campeonato-brasileiro-api#readme"
+}
