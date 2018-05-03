@@ -57,7 +57,7 @@ exports.tabela = function(serie) {
         $('.tabela-times tbody tr').each(function() {
           var item = $(this);
           var time = {};
-          time.nome = item.find('.tabela-times-time-link').attr('title');
+          time.nome = item.find('.tabela-times-time-nome').text();
           lista.push(time);
         });
         var x = 0;
