@@ -1,6 +1,6 @@
 {
   "name": "campeonato-brasileiro-api",
-  "version": "1.0.1",
+  "version": "1.0.6",
   "description": "módulo para consulta da tabela e rodadas do campeonato brasileiro",
   "main": "index.js",
   "scripts": {
