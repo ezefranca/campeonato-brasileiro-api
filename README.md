@@ -49,15 +49,18 @@ cb.tabela(serie).then(function(tabela) {
 { error: 'Não foi possível retornar as informações!' }
 ```
 
-### Rodada Atual
+### Rodada 
+
+Para rodada, passe o numero da rodada e série. 
 
 ```js
 
 const cb = require('campeonato-brasileiro-api');
 
 const serie = 'a';
+const rodada = '4';
 
-cb.rodadaAtual(serie).then(function(rodada) {
+cb.rodadaAtual(serie, rodada).then(function(rodada) {
 	console.log(rodada);
 }, function(err){
 	console.log(err);

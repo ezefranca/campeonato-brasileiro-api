@@ -5,23 +5,26 @@ const request = require('request');
 const cheerio = require('cheerio');
 
 const urlBase = 'http://globoesporte.globo.com/futebol/brasileirao-serie-';
+var rodadaBaseURL = 'https://globoesporte.globo.com/servico/backstage/esportes_campeonato/esporte/futebol/modalidade/futebol_de_campo/categoria/profissional/campeonato/campeonato-brasileiro/edicao/campeonato-brasileiro-2018/fases/fase-unica-seriea-2018/rodada/%s/jogos.html';
 const userAgent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_2) AppleWebKit/601.3.9 (KHTML, like Gecko) Version/9.0.2 Safari/601.3.9';
 
-exports.rodadaAtual = function(serie) {
+exports.rodadaAtual = function(serie, rodada) {
+  rodadaBaseURL = rodadaBaseURL.replace('%s', rodada);
   return new Promise(function(accept, error) {
     var options = {
-      url:  urlBase + serie,
+      url:  rodadaBaseURL,
       headers: {
         'User-Agent': userAgent
       }
     };
     request(options, function(error, response, html) {
       if(!error) {
-
+        
         var $ = cheerio.load(html);
         var lista = [];
 
-        $('.lista-de-jogos-conteudo li').each(function() {
+        $('.lista-de-jogos-item').each(function() {
+          console.log('batata');
           var rodada = {};
           var item = $(this);
           rodada.mandante = item.find('.placar-jogo-equipes').find('.placar-jogo-equipes-mandante').find('.placar-jogo-equipes-sigla').attr('title');
