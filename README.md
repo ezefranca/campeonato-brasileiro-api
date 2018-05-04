@@ -3,6 +3,8 @@
 [![npm](https://img.shields.io/npm/v/campeonato-brasileiro-api.svg)](https://www.npmjs.com/package/campeonato-brasileiro-api)
 [![npm](https://img.shields.io/npm/dm/campeonato-brasileiro-api.svg)](https://www.npmjs.com/package/campeonato-brasileiro-api)
 
+[![NPM](https://nodei.co/npm/campeonato-brasileiro-api.png?downloads=true&downloadRank=true&stars=true)](https://nodei.co/npm/campeonato-brasileiro-api/)
+
 O **campeonato-brasileiro-api** é um módulo para consulta da tabela e rodadas do campeonato brasileiro
 
 ## Instalação
