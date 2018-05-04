@@ -24,7 +24,6 @@ exports.rodadaAtual = function(serie, rodada) {
         var lista = [];
 
         $('.lista-de-jogos-item').each(function() {
-          console.log('batata');
           var rodada = {};
           var item = $(this);
           rodada.mandante = item.find('.placar-jogo-equipes').find('.placar-jogo-equipes-mandante').find('.placar-jogo-equipes-sigla').attr('title');
