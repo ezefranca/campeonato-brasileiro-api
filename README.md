@@ -1,7 +1,5 @@
-# API simples do Campeonato Brasileiro com tabela e rodadas
-
-[![npm](https://img.shields.io/npm/v/campeonato-brasileiro-api.svg)](https://www.npmjs.com/package/campeonato-brasileiro-api)
-[![npm](https://img.shields.io/npm/dm/campeonato-brasileiro-api.svg)](https://www.npmjs.com/package/campeonato-brasileiro-api)
+## API simples do Campeonato Brasileiro (tabela e rodadas)
+[![npm](https://img.shields.io/npm/v/campeonato-brasileiro-api.svg)](https://www.npmjs.com/package/campeonato-brasileiro-api) [![npm](https://img.shields.io/npm/dm/campeonato-brasileiro-api.svg)](https://www.npmjs.com/package/campeonato-brasileiro-api)
 
 [![NPM](https://nodei.co/npm/campeonato-brasileiro-api.png?downloads=true&downloadRank=true&stars=true)](https://nodei.co/npm/campeonato-brasileiro-api/)
 
