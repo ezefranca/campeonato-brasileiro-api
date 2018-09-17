@@ -1,7 +1,7 @@
 {
   "name": "campeonato-brasileiro-api",
-  "version": "1.0.10",
-  "description": "módulo para consulta da tabela e rodadas do campeonato brasileiro",
+  "version": "1.2.0",
+  "description": "Módulo para consulta da tabela e rodadas do campeonato brasileiro",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -14,7 +14,9 @@
     "campeonato",
     "brasileiro",
     "futebol",
-    "brazil"
+    "brazil",
+    "brasileirao",
+    "soccer brazil"
   ],
   "author": "Ezequiel França",
   "license": "MIT",

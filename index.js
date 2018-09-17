@@ -36,7 +36,7 @@ exports.rodadaAtual = function(serie, rodada) {
         });
         accept(lista);
       } else {
-        error({ error:"Não foi possível retornar as informações!" });
+        error({ error:"Não foi possível retornar as informações!!" });
       }
     });
   });
