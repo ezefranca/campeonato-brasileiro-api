@@ -1,3 +1,5 @@
+## Atenção: A Globo mudou o layout da página, mas já vi que é possível, em breve atualização
+
 ## API simples do Campeonato Brasileiro (tabela e rodadas)
 [![npm](https://img.shields.io/npm/v/campeonato-brasileiro-api.svg)](https://www.npmjs.com/package/campeonato-brasileiro-api) [![npm](https://img.shields.io/npm/dm/campeonato-brasileiro-api.svg)](https://www.npmjs.com/package/campeonato-brasileiro-api)
 
