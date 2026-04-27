@@ -10,7 +10,10 @@
     }
   },
   "scripts": {
-    "test": "node --test"
+    "test": "node --test",
+    "demo": "node examples/demo/server.js",
+    "demo:live": "node examples/demo/server.js",
+    "demo:fixtures": "node examples/demo/run-fixtures.js"
   },
   "repository": {
     "type": "git",

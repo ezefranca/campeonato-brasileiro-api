@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>campeonato-brasileiro-api Demo</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">Demo local</p>
+          <h1>Classificação com escudos</h1>
+          <p class="hero-text">
+            Exemplo mínimo para validar a biblioteca localmente, consultar Série A, B, C ou D e renderizar a tabela com os badges dos times.
+          </p>
+        </div>
+        <div class="hero-card">
+          <div class="hero-stat">
+            <span class="hero-stat-label">Fonte</span>
+            <strong id="competitionName">Carregando...</strong>
+          </div>
+          <div class="hero-stat">
+            <span class="hero-stat-label">Rodada atual</span>
+            <strong id="roundLabel">-</strong>
+          </div>
+          <div class="hero-stat">
+            <span class="hero-stat-label">Modo</span>
+            <strong id="groupMode">Tabela única</strong>
+          </div>
+        </div>
+      </header>
+
+      <main class="layout">
+        <aside class="controls-card">
+          <label class="control">
+            <span>Série</span>
+            <select id="serieSelect"></select>
+          </label>
+
+          <label class="control" id="groupField" hidden>
+            <span>Grupo</span>
+            <select id="groupSelect"></select>
+          </label>
+
+          <button id="reloadButton" class="reload-button" type="button">
+            Atualizar tabela
+          </button>
+
+          <p class="hint">
+            Execute localmente com <code>npm run demo</code> e abra <code>http://127.0.0.1:3020</code>.
+          </p>
+        </aside>
+
+        <section class="table-card">
+          <div class="table-toolbar">
+            <div>
+              <p class="table-title" id="tableTitle">Carregando...</p>
+              <p class="table-subtitle" id="tableSubtitle">Aguardando dados</p>
+            </div>
+            <div class="legend-list" id="legendList"></div>
+          </div>
+
+          <div id="statusMessage" class="status-message">Carregando dados...</div>
+
+          <div class="table-wrapper">
+            <table class="standings-table" id="standingsTable" hidden>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Time</th>
+                  <th>PTS</th>
+                  <th>J</th>
+                  <th>V</th>
+                  <th>E</th>
+                  <th>D</th>
+                  <th>GP</th>
+                  <th>GC</th>
+                  <th>SG</th>
+                  <th>%</th>
+                  <th>Forma</th>
+                </tr>
+              </thead>
+              <tbody id="standingsBody"></tbody>
+            </table>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>

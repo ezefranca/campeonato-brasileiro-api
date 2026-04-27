@@ -17,6 +17,34 @@ API moderna para consultar classificação e rodada atual das Séries A, B, C e 
 npm install campeonato-brasileiro-api
 ```
 
+## Demo local
+
+Este repositório inclui um app de exemplo em `examples/demo/` para visualizar a classificação com os escudos dos times.
+
+Executar com dados reais da internet:
+
+```bash
+npm run demo
+```
+
+ou, de forma explícita:
+
+```bash
+npm run demo:live
+```
+
+Depois abra:
+
+```text
+http://127.0.0.1:3020
+```
+
+Executar com fixtures locais, sem depender de rede:
+
+```bash
+npm run demo:fixtures
+```
+
 ## Métodos disponíveis
 
 | Método | Descrição |
