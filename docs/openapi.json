@@ -1,0 +1,1278 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "campeonato-brasileiro-api HTTP Reference",
+    "version": "2.0.1",
+    "description": "Contrato HTTP de referência para wrappers REST construídos sobre o pacote campeonato-brasileiro-api. Este repositório nao expõe esses endpoints diretamente."
+  },
+  "servers": [
+    {
+      "url": "https://example.com/api",
+      "description": "Servidor de exemplo"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Series",
+      "description": "Operações para descobrir séries suportadas"
+    },
+    {
+      "name": "Competition",
+      "description": "Operações do contrato principal normalizado"
+    },
+    {
+      "name": "Legacy",
+      "description": "Helpers legados em formato compatível com o pacote original"
+    }
+  ],
+  "paths": {
+    "/series": {
+      "get": {
+        "tags": [
+          "Series"
+        ],
+        "summary": "Lista as séries suportadas",
+        "operationId": "listSeries",
+        "responses": {
+          "200": {
+            "description": "Séries suportadas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SupportedSeriesItem"
+                  }
+                },
+                "example": [
+                  {
+                    "code": "a",
+                    "slug": "brasileirao-serie-a",
+                    "name": "Campeonato Brasileiro Série A",
+                    "grouped": false,
+                    "url": "https://example.com/brasileirao-serie-a"
+                  },
+                  {
+                    "code": "d",
+                    "slug": "brasileirao-serie-d",
+                    "name": "Campeonato Brasileiro Série D",
+                    "grouped": true,
+                    "url": "https://example.com/brasileirao-serie-d"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/competitions/{serie}": {
+      "get": {
+        "tags": [
+          "Competition"
+        ],
+        "summary": "Retorna o payload completo de uma competição",
+        "operationId": "getCompetition",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Serie"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Payload completo normalizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompetitionPayload"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ErrorResponse"
+          }
+        }
+      }
+    },
+    "/competitions/{serie}/standings": {
+      "get": {
+        "tags": [
+          "Competition"
+        ],
+        "summary": "Retorna classificação e legendas",
+        "operationId": "getStandings",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Serie"
+          },
+          {
+            "$ref": "#/components/parameters/Group"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Classificação normalizada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandingsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ErrorResponse"
+          },
+          "404": {
+            "$ref": "#/components/responses/ErrorResponse"
+          }
+        }
+      }
+    },
+    "/competitions/{serie}/table": {
+      "get": {
+        "tags": [
+          "Competition"
+        ],
+        "summary": "Retorna uma tabela única",
+        "operationId": "getTable",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Serie"
+          },
+          {
+            "$ref": "#/components/parameters/Group"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tabela única",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Table"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ErrorResponse"
+          },
+          "404": {
+            "$ref": "#/components/responses/ErrorResponse"
+          }
+        }
+      }
+    },
+    "/competitions/{serie}/groups": {
+      "get": {
+        "tags": [
+          "Competition"
+        ],
+        "summary": "Retorna os grupos da Série D",
+        "operationId": "getGroups",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Serie"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de grupos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Table"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ErrorResponse"
+          }
+        }
+      }
+    },
+    "/competitions/{serie}/rounds": {
+      "get": {
+        "tags": [
+          "Competition"
+        ],
+        "summary": "Retorna a rodada atual normalizada",
+        "operationId": "getRounds",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Serie"
+          },
+          {
+            "$ref": "#/components/parameters/Group"
+          },
+          {
+            "$ref": "#/components/parameters/Number"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Rodadas normalizadas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoundsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ErrorResponse"
+          },
+          "404": {
+            "$ref": "#/components/responses/ErrorResponse"
+          },
+          "422": {
+            "$ref": "#/components/responses/ErrorResponse"
+          }
+        }
+      }
+    },
+    "/competitions/{serie}/current-round": {
+      "get": {
+        "tags": [
+          "Competition"
+        ],
+        "summary": "Alias de getRounds",
+        "operationId": "getCurrentRound",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Serie"
+          },
+          {
+            "$ref": "#/components/parameters/Group"
+          },
+          {
+            "$ref": "#/components/parameters/Number"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Rodadas normalizadas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoundsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ErrorResponse"
+          },
+          "404": {
+            "$ref": "#/components/responses/ErrorResponse"
+          },
+          "422": {
+            "$ref": "#/components/responses/ErrorResponse"
+          }
+        }
+      }
+    },
+    "/legacy/{serie}/tabela": {
+      "get": {
+        "tags": [
+          "Legacy"
+        ],
+        "summary": "Retorna a classificação em formato legado",
+        "operationId": "legacyTabela",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Serie"
+          },
+          {
+            "$ref": "#/components/parameters/Group"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Formato legado de classificação",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/LegacyTableEntry"
+                      }
+                    },
+                    {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/LegacyGroupTable"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ErrorResponse"
+          },
+          "404": {
+            "$ref": "#/components/responses/ErrorResponse"
+          }
+        }
+      }
+    },
+    "/legacy/{serie}/rodada-atual": {
+      "get": {
+        "tags": [
+          "Legacy"
+        ],
+        "summary": "Retorna os jogos da rodada em formato legado",
+        "operationId": "legacyRodadaAtual",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Serie"
+          },
+          {
+            "$ref": "#/components/parameters/Group"
+          },
+          {
+            "name": "rodada",
+            "in": "query",
+            "description": "Rodada esperada para validação",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Formato legado de rodada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/LegacyRoundMatch"
+                      }
+                    },
+                    {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/LegacyGroupRound"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ErrorResponse"
+          },
+          "404": {
+            "$ref": "#/components/responses/ErrorResponse"
+          },
+          "422": {
+            "$ref": "#/components/responses/ErrorResponse"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "parameters": {
+      "Serie": {
+        "name": "serie",
+        "in": "path",
+        "required": true,
+        "description": "Código da série",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "a",
+            "b",
+            "c",
+            "d"
+          ]
+        }
+      },
+      "Group": {
+        "name": "group",
+        "in": "query",
+        "required": false,
+        "description": "Grupo da Série D. Pode ser A1, Grupo A1 ou o id numérico do grupo.",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "Number": {
+        "name": "number",
+        "in": "query",
+        "required": false,
+        "description": "Rodada esperada para validação",
+        "schema": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "responses": {
+      "ErrorResponse": {
+        "description": "Erro de domínio ou validação",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "name": "BrasileiroApiError",
+              "code": "GROUP_REQUIRED",
+              "message": "A grouped competition requires the \"group\" option. Use getGroups() or pass { group }.",
+              "details": {
+                "availableGroups": [
+                  "Grupo A1",
+                  "Grupo A14"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "SupportedSeriesItem": {
+        "type": "object",
+        "required": [
+          "code",
+          "slug",
+          "name",
+          "grouped",
+          "url"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": [
+              "a",
+              "b",
+              "c",
+              "d"
+            ]
+          },
+          "slug": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "grouped": {
+            "type": "boolean"
+          },
+          "url": {
+            "type": "string",
+            "format": "uri"
+          }
+        }
+      },
+      "CompetitionMetadata": {
+        "type": "object",
+        "required": [
+          "code",
+          "slug",
+          "name",
+          "season",
+          "sport",
+          "grouped",
+          "phase",
+          "edition",
+          "source"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": [
+              "a",
+              "b",
+              "c",
+              "d"
+            ]
+          },
+          "slug": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "season": {
+            "type": "integer",
+            "nullable": true
+          },
+          "sport": {
+            "type": "string",
+            "example": "futebol"
+          },
+          "grouped": {
+            "type": "boolean"
+          },
+          "phase": {
+            "$ref": "#/components/schemas/Phase"
+          },
+          "edition": {
+            "$ref": "#/components/schemas/Edition"
+          },
+          "source": {
+            "$ref": "#/components/schemas/Source"
+          }
+        }
+      },
+      "Phase": {
+        "type": "object",
+        "required": [
+          "slug",
+          "disclaimer",
+          "description",
+          "typeId",
+          "grouped"
+        ],
+        "properties": {
+          "slug": {
+            "type": "string",
+            "nullable": true
+          },
+          "disclaimer": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "typeId": {
+            "type": "string",
+            "nullable": true
+          },
+          "grouped": {
+            "type": "boolean"
+          }
+        }
+      },
+      "Edition": {
+        "type": "object",
+        "required": [
+          "name",
+          "location",
+          "startsAt",
+          "endsAt",
+          "regulation"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "location": {
+            "type": "string",
+            "nullable": true
+          },
+          "startsAt": {
+            "type": "string",
+            "nullable": true
+          },
+          "endsAt": {
+            "type": "string",
+            "nullable": true
+          },
+          "regulation": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "Source": {
+        "type": "object",
+        "required": [
+          "provider",
+          "url",
+          "resourceId",
+          "tUUID"
+        ],
+        "properties": {
+          "provider": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "resourceId": {
+            "type": "string",
+            "nullable": true
+          },
+          "tUUID": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "Legend": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "color"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "color": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "Team": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "shortName",
+          "badge"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "shortName": {
+            "type": "string",
+            "nullable": true
+          },
+          "badge": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "TableEntry": {
+        "type": "object",
+        "required": [
+          "position",
+          "team",
+          "points",
+          "matches",
+          "wins",
+          "draws",
+          "losses",
+          "goalsFor",
+          "goalsAgainst",
+          "goalDifference",
+          "efficiency",
+          "movement",
+          "recentForm",
+          "legend"
+        ],
+        "properties": {
+          "position": {
+            "type": "integer",
+            "nullable": true
+          },
+          "team": {
+            "$ref": "#/components/schemas/Team"
+          },
+          "points": {
+            "type": "integer",
+            "nullable": true
+          },
+          "matches": {
+            "type": "integer",
+            "nullable": true
+          },
+          "wins": {
+            "type": "integer",
+            "nullable": true
+          },
+          "draws": {
+            "type": "integer",
+            "nullable": true
+          },
+          "losses": {
+            "type": "integer",
+            "nullable": true
+          },
+          "goalsFor": {
+            "type": "integer",
+            "nullable": true
+          },
+          "goalsAgainst": {
+            "type": "integer",
+            "nullable": true
+          },
+          "goalDifference": {
+            "type": "integer",
+            "nullable": true
+          },
+          "efficiency": {
+            "type": "integer",
+            "nullable": true
+          },
+          "movement": {
+            "type": "integer",
+            "nullable": true
+          },
+          "recentForm": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "W",
+                "D",
+                "L"
+              ]
+            }
+          },
+          "legend": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Legend"
+              }
+            ],
+            "nullable": true
+          }
+        }
+      },
+      "RoundMeta": {
+        "type": "object",
+        "required": [
+          "number",
+          "total",
+          "label"
+        ],
+        "properties": {
+          "number": {
+            "type": "integer",
+            "nullable": true
+          },
+          "total": {
+            "type": "integer",
+            "nullable": true
+          },
+          "label": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "PenaltyScore": {
+        "type": "object",
+        "required": [
+          "home",
+          "away"
+        ],
+        "properties": {
+          "home": {
+            "type": "integer",
+            "nullable": true
+          },
+          "away": {
+            "type": "integer",
+            "nullable": true
+          }
+        }
+      },
+      "Score": {
+        "type": "object",
+        "required": [
+          "home",
+          "away",
+          "penalties"
+        ],
+        "properties": {
+          "home": {
+            "type": "integer",
+            "nullable": true
+          },
+          "away": {
+            "type": "integer",
+            "nullable": true
+          },
+          "penalties": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PenaltyScore"
+              }
+            ],
+            "nullable": true
+          }
+        }
+      },
+      "Coverage": {
+        "type": "object",
+        "required": [
+          "label",
+          "url",
+          "statusCode"
+        ],
+        "properties": {
+          "label": {
+            "type": "string",
+            "nullable": true
+          },
+          "url": {
+            "type": "string",
+            "nullable": true
+          },
+          "statusCode": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "Match": {
+        "type": "object",
+        "required": [
+          "id",
+          "groupId",
+          "groupName",
+          "round",
+          "totalRounds",
+          "dateTime",
+          "date",
+          "time",
+          "started",
+          "status",
+          "statusCode",
+          "venue",
+          "homeTeam",
+          "awayTeam",
+          "score",
+          "coverage"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "groupId": {
+            "type": "integer",
+            "nullable": true
+          },
+          "groupName": {
+            "type": "string",
+            "nullable": true
+          },
+          "round": {
+            "type": "integer",
+            "nullable": true
+          },
+          "totalRounds": {
+            "type": "integer",
+            "nullable": true
+          },
+          "dateTime": {
+            "type": "string",
+            "nullable": true
+          },
+          "date": {
+            "type": "string",
+            "nullable": true
+          },
+          "time": {
+            "type": "string",
+            "nullable": true
+          },
+          "started": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "scheduled",
+              "live",
+              "finished"
+            ]
+          },
+          "statusCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "venue": {
+            "type": "string",
+            "nullable": true
+          },
+          "homeTeam": {
+            "$ref": "#/components/schemas/Team"
+          },
+          "awayTeam": {
+            "$ref": "#/components/schemas/Team"
+          },
+          "score": {
+            "$ref": "#/components/schemas/Score"
+          },
+          "coverage": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Coverage"
+              }
+            ],
+            "nullable": true
+          }
+        }
+      },
+      "Table": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "round",
+          "entries"
+        ],
+        "properties": {
+          "id": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "round": {
+            "$ref": "#/components/schemas/RoundMeta"
+          },
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TableEntry"
+            }
+          }
+        }
+      },
+      "Round": {
+        "type": "object",
+        "required": [
+          "id",
+          "groupId",
+          "groupName",
+          "number",
+          "total",
+          "label",
+          "matches"
+        ],
+        "properties": {
+          "id": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
+          "groupId": {
+            "type": "integer",
+            "nullable": true
+          },
+          "groupName": {
+            "type": "string",
+            "nullable": true
+          },
+          "number": {
+            "type": "integer",
+            "nullable": true
+          },
+          "total": {
+            "type": "integer",
+            "nullable": true
+          },
+          "label": {
+            "type": "string",
+            "nullable": true
+          },
+          "matches": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Match"
+            }
+          }
+        }
+      },
+      "CompetitionPayload": {
+        "type": "object",
+        "required": [
+          "competition",
+          "grouped",
+          "legends",
+          "tables",
+          "rounds",
+          "matches"
+        ],
+        "properties": {
+          "competition": {
+            "$ref": "#/components/schemas/CompetitionMetadata"
+          },
+          "grouped": {
+            "type": "boolean"
+          },
+          "legends": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Legend"
+            }
+          },
+          "tables": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Table"
+            }
+          },
+          "rounds": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Round"
+            }
+          },
+          "matches": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Match"
+            }
+          }
+        }
+      },
+      "StandingsResponse": {
+        "type": "object",
+        "required": [
+          "competition",
+          "grouped",
+          "legends",
+          "tables"
+        ],
+        "properties": {
+          "competition": {
+            "$ref": "#/components/schemas/CompetitionMetadata"
+          },
+          "grouped": {
+            "type": "boolean"
+          },
+          "legends": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Legend"
+            }
+          },
+          "tables": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Table"
+            }
+          }
+        }
+      },
+      "RoundsResponse": {
+        "type": "object",
+        "required": [
+          "competition",
+          "grouped",
+          "rounds"
+        ],
+        "properties": {
+          "competition": {
+            "$ref": "#/components/schemas/CompetitionMetadata"
+          },
+          "grouped": {
+            "type": "boolean"
+          },
+          "rounds": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Round"
+            }
+          }
+        }
+      },
+      "LegacyTableEntry": {
+        "type": "object",
+        "required": [
+          "nome",
+          "sigla",
+          "escudo",
+          "posicao",
+          "pontos",
+          "jogos",
+          "vitorias",
+          "empates",
+          "derrotas",
+          "golsPro",
+          "golsContra",
+          "saldoGols",
+          "percentual"
+        ],
+        "properties": {
+          "nome": {
+            "type": "string",
+            "nullable": true
+          },
+          "sigla": {
+            "type": "string",
+            "nullable": true
+          },
+          "escudo": {
+            "type": "string",
+            "nullable": true
+          },
+          "posicao": {
+            "type": "integer",
+            "nullable": true
+          },
+          "pontos": {
+            "type": "string"
+          },
+          "jogos": {
+            "type": "string"
+          },
+          "vitorias": {
+            "type": "string"
+          },
+          "empates": {
+            "type": "string"
+          },
+          "derrotas": {
+            "type": "string"
+          },
+          "golsPro": {
+            "type": "string"
+          },
+          "golsContra": {
+            "type": "string"
+          },
+          "saldoGols": {
+            "type": "string"
+          },
+          "percentual": {
+            "type": "string"
+          }
+        }
+      },
+      "LegacyGroupTable": {
+        "type": "object",
+        "required": [
+          "grupo",
+          "classificacao"
+        ],
+        "properties": {
+          "grupo": {
+            "type": "string",
+            "nullable": true
+          },
+          "classificacao": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LegacyTableEntry"
+            }
+          }
+        }
+      },
+      "LegacyRoundMatch": {
+        "type": "object",
+        "required": [
+          "mandante",
+          "placarMandante",
+          "visitante",
+          "placarVisitante"
+        ],
+        "properties": {
+          "mandante": {
+            "type": "string",
+            "nullable": true
+          },
+          "placarMandante": {
+            "type": "integer",
+            "nullable": true
+          },
+          "visitante": {
+            "type": "string",
+            "nullable": true
+          },
+          "placarVisitante": {
+            "type": "integer",
+            "nullable": true
+          }
+        }
+      },
+      "LegacyGroupRound": {
+        "type": "object",
+        "required": [
+          "grupo",
+          "rodada",
+          "jogos"
+        ],
+        "properties": {
+          "grupo": {
+            "type": "string",
+            "nullable": true
+          },
+          "rodada": {
+            "type": "integer",
+            "nullable": true
+          },
+          "jogos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LegacyRoundMatch"
+            }
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "required": [
+          "name",
+          "code",
+          "message"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "BrasileiroApiError"
+          },
+          "code": {
+            "type": "string",
+            "example": "INVALID_SERIE"
+          },
+          "message": {
+            "type": "string"
+          },
+          "details": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      }
+    }
+  }
+}

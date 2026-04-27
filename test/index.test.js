@@ -121,3 +121,17 @@ test('the ESM entrypoint re-exports the same public API', async () => {
   assert.equal(typeof esm.tabela, 'function');
   assert.equal(esm.SUPPORTED_SERIES.length, 4);
 });
+
+test('the OpenAPI reference spec is valid JSON and documents the main routes', () => {
+  const specPath = path.join(__dirname, '..', 'docs', 'openapi.json');
+  const spec = JSON.parse(readFileSync(specPath, 'utf8'));
+
+  assert.equal(spec.openapi, '3.0.3');
+  assert.equal(spec.info.version, '2.0.1');
+  assert.ok(spec.paths['/series']);
+  assert.ok(spec.paths['/competitions/{serie}']);
+  assert.ok(spec.paths['/competitions/{serie}/standings']);
+  assert.ok(spec.paths['/competitions/{serie}/rounds']);
+  assert.ok(spec.paths['/legacy/{serie}/tabela']);
+  assert.ok(spec.paths['/legacy/{serie}/rodada-atual']);
+});
