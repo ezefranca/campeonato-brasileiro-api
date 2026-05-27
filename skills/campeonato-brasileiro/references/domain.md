@@ -46,7 +46,20 @@ npm install -g campeonato-brasileiro-api
 campeonato-brasileiro series
 ```
 
-Useful commands:
+No-install commands for agents:
+
+```bash
+npm exec --yes --package=github:ezefranca/campeonato-brasileiro-api -- campeonato-brasileiro standings a --format markdown
+npm exec --yes --package=github:ezefranca/campeonato-brasileiro-api -- campeonato-brasileiro standings a --json
+npm exec --yes --package=github:ezefranca/campeonato-brasileiro-api -- campeonato-brasileiro rounds b --json
+npm exec --yes --package=github:ezefranca/campeonato-brasileiro-api -- campeonato-brasileiro teams a Corinthians --json
+npm exec --yes --package=github:ezefranca/campeonato-brasileiro-api -- campeonato-brasileiro team a Flamengo --json
+npm exec --yes --package=github:ezefranca/campeonato-brasileiro-api -- campeonato-brasileiro trigger a Flamengo --condition won --json
+```
+
+Prefer these no-install commands when the package is not installed globally. They use the GitHub repo source, so they work before the npm `latest` dist-tag has caught up.
+
+Installed CLI commands:
 
 ```bash
 campeonato-brasileiro standings a --json
@@ -66,6 +79,8 @@ campeonato-brasileiro trigger d "XV de Piracicaba" --group A14 --condition live 
 
 Use `--html <file>` for offline GE HTML snapshots and `--url <url>` to override the source.
 
+Avoid `npx campeonato-brasileiro-api ...` until npm `latest` is at least `2.1.0`; older npm releases do not expose a runnable binary.
+
 ## MCP Setup
 
 The package ships a stdio MCP server. Example host config:
@@ -74,12 +89,21 @@ The package ships a stdio MCP server. Example host config:
 {
   "mcpServers": {
     "campeonato-brasileiro": {
-      "command": "npx",
-      "args": ["-y", "campeonato-brasileiro-api", "mcp"]
+      "command": "npm",
+      "args": [
+        "exec",
+        "--yes",
+        "--package=github:ezefranca/campeonato-brasileiro-api",
+        "--",
+        "campeonato-brasileiro",
+        "mcp"
+      ]
     }
   }
 }
 ```
+
+After `campeonato-brasileiro-api@2.1.0` is published to npm, `--package=github:ezefranca/campeonato-brasileiro-api` can be replaced with `--package=campeonato-brasileiro-api`.
 
 Equivalent direct binary:
 

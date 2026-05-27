@@ -106,12 +106,21 @@ Configuração compatível com Claude Desktop/Codex:
 {
   "mcpServers": {
     "campeonato-brasileiro": {
-      "command": "npx",
-      "args": ["-y", "campeonato-brasileiro-api", "mcp"]
+      "command": "npm",
+      "args": [
+        "exec",
+        "--yes",
+        "--package=github:ezefranca/campeonato-brasileiro-api",
+        "--",
+        "campeonato-brasileiro",
+        "mcp"
+      ]
     }
   }
 }
 ```
+
+Depois que `campeonato-brasileiro-api@2.1.0` estiver publicado no npm, também é possível trocar `--package=github:ezefranca/campeonato-brasileiro-api` por `--package=campeonato-brasileiro-api`.
 
 Ferramentas MCP:
 
@@ -158,6 +167,12 @@ npx skills add https://github.com/ezefranca/campeonato-brasileiro-api \
   -a codex \
   -g \
   -y
+```
+
+Usar a CLI sem instalação global, direto do GitHub:
+
+```bash
+npm exec --yes --package=github:ezefranca/campeonato-brasileiro-api -- campeonato-brasileiro standings a --format markdown
 ```
 
 Use em prompts:

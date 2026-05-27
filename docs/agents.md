@@ -71,12 +71,21 @@ Claude Desktop / Codex-style MCP config:
 {
   "mcpServers": {
     "campeonato-brasileiro": {
-      "command": "npx",
-      "args": ["-y", "campeonato-brasileiro-api", "mcp"]
+      "command": "npm",
+      "args": [
+        "exec",
+        "--yes",
+        "--package=github:ezefranca/campeonato-brasileiro-api",
+        "--",
+        "campeonato-brasileiro",
+        "mcp"
+      ]
     }
   }
 }
 ```
+
+After `campeonato-brasileiro-api@2.1.0` is published to npm, `--package=github:ezefranca/campeonato-brasileiro-api` can be replaced with `--package=campeonato-brasileiro-api`.
 
 If installed globally:
 
@@ -198,6 +207,12 @@ npx skills add https://github.com/ezefranca/campeonato-brasileiro-api \
   -a codex \
   -g \
   -y
+```
+
+Use the CLI without a global install, directly from GitHub:
+
+```bash
+npm exec --yes --package=github:ezefranca/campeonato-brasileiro-api -- campeonato-brasileiro standings a --format markdown
 ```
 
 Use it explicitly:

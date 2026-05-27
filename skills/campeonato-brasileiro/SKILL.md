@@ -5,20 +5,44 @@ description: Work with Campeonato Brasileiro/Brasileirão football data for agen
 
 # Campeonato Brasileiro
 
-Use this skill to answer Brasileirão questions and build automation logic from the package's normalized data. Prefer structured tools over scraping or guessing.
+Use this skill to answer Brasileirão questions and build automation logic from the package's normalized data. Prefer the no-install GitHub CLI command below unless MCP tools are already visible in the current agent session.
+
+## Fast Path
+
+For common read-only questions, use the GitHub-backed CLI directly. It works even when the npm `latest` release has not caught up and nothing is installed globally:
+
+```bash
+npm exec --yes --package=github:ezefranca/campeonato-brasileiro-api -- campeonato-brasileiro standings a --format markdown
+```
+
+For "current table" without a Serie, assume Série A and say that assumption. Return the command's markdown table directly, trimming only if the user asked for a summary. Do not run extra metadata commands unless the user asks for source details.
 
 ## Tool Order
 
-1. Use the MCP server when available. Prefer these tools:
+1. If `brasileirao_*` MCP tools are visible in the current tool list, use them:
    - `brasileirao_find_teams` for ambiguous names, acronyms or ids.
    - `brasileirao_get_team_snapshot` for a team-centric view.
    - `brasileirao_check_team_trigger` for automation conditions.
    - `brasileirao_get_standings` and `brasileirao_get_rounds` for general context.
-2. If MCP is unavailable, use the CLI:
-   - `campeonato-brasileiro teams a Corinthians --json`
-   - `campeonato-brasileiro team a Flamengo --json`
-   - `campeonato-brasileiro trigger a Flamengo --condition won --json`
-3. In code, import `campeonato-brasileiro-api` and call `findTeams`, `getTeamSnapshot`, or `checkTeamResult`.
+2. If MCP tools are not visible, do not probe for MCP. Use `npm exec --yes --package=github:ezefranca/campeonato-brasileiro-api -- campeonato-brasileiro ...`.
+3. If `campeonato-brasileiro` is already on PATH, it is acceptable to use it, but do not require a global install.
+4. In code, import `campeonato-brasileiro-api` and call `findTeams`, `getTeamSnapshot`, or `checkTeamResult`.
+
+Useful no-install commands:
+
+```bash
+npm exec --yes --package=github:ezefranca/campeonato-brasileiro-api -- campeonato-brasileiro standings a --format markdown
+npm exec --yes --package=github:ezefranca/campeonato-brasileiro-api -- campeonato-brasileiro standings a --json
+npm exec --yes --package=github:ezefranca/campeonato-brasileiro-api -- campeonato-brasileiro rounds a --json
+npm exec --yes --package=github:ezefranca/campeonato-brasileiro-api -- campeonato-brasileiro teams a Corinthians --json
+npm exec --yes --package=github:ezefranca/campeonato-brasileiro-api -- campeonato-brasileiro trigger a Flamengo --condition won --json
+```
+
+Avoid these brittle fallbacks:
+
+- `npx campeonato-brasileiro-api ...` while npm `latest` is older than `2.1.0`.
+- `require('campeonato-brasileiro-api')` from an `npm exec` transient shell; Node may not resolve that package path reliably.
+- Installing into a temporary directory unless every documented command above fails.
 
 ## Automation Workflow
 
