@@ -2,7 +2,7 @@
   "openapi": "3.0.3",
   "info": {
     "title": "campeonato-brasileiro-api HTTP Reference",
-    "version": "2.0.1",
+    "version": "2.1.0",
     "description": "Contrato HTTP de referência para wrappers REST construídos sobre o pacote campeonato-brasileiro-api. Este repositório nao expõe esses endpoints diretamente."
   },
   "servers": [
@@ -19,6 +19,10 @@
     {
       "name": "Competition",
       "description": "Operações do contrato principal normalizado"
+    },
+    {
+      "name": "Agents",
+      "description": "Operações para busca de times, snapshots e gatilhos de automação"
     },
     {
       "name": "Legacy",
@@ -279,6 +283,129 @@
         }
       }
     },
+    "/competitions/{serie}/teams": {
+      "get": {
+        "tags": [
+          "Agents"
+        ],
+        "summary": "Busca times na competição atual",
+        "operationId": "findTeams",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Serie"
+          },
+          {
+            "name": "query",
+            "in": "query",
+            "required": false,
+            "description": "Nome, sigla ou id do time",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Group"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Times encontrados e ranqueados",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TeamSearchResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ErrorResponse"
+          },
+          "404": {
+            "$ref": "#/components/responses/ErrorResponse"
+          }
+        }
+      }
+    },
+    "/competitions/{serie}/teams/{team}": {
+      "get": {
+        "tags": [
+          "Agents"
+        ],
+        "summary": "Retorna snapshot de um time",
+        "operationId": "getTeamSnapshot",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Serie"
+          },
+          {
+            "$ref": "#/components/parameters/Team"
+          },
+          {
+            "$ref": "#/components/parameters/Group"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Snapshot orientado a agentes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TeamSnapshot"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ErrorResponse"
+          },
+          "404": {
+            "$ref": "#/components/responses/ErrorResponse"
+          }
+        }
+      }
+    },
+    "/competitions/{serie}/teams/{team}/trigger": {
+      "get": {
+        "tags": [
+          "Agents"
+        ],
+        "summary": "Avalia um gatilho de automação para um time",
+        "operationId": "checkTeamResult",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Serie"
+          },
+          {
+            "$ref": "#/components/parameters/Team"
+          },
+          {
+            "$ref": "#/components/parameters/Condition"
+          },
+          {
+            "$ref": "#/components/parameters/Group"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Decisão de automação baseada no estado da rodada atual",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TriggerResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ErrorResponse"
+          },
+          "404": {
+            "$ref": "#/components/responses/ErrorResponse"
+          }
+        }
+      }
+    },
     "/legacy/{serie}/tabela": {
       "get": {
         "tags": [
@@ -423,6 +550,35 @@
         "schema": {
           "type": "integer",
           "minimum": 1
+        }
+      },
+      "Team": {
+        "name": "team",
+        "in": "path",
+        "required": true,
+        "description": "Nome, sigla ou id do time",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "Condition": {
+        "name": "condition",
+        "in": "query",
+        "required": false,
+        "description": "Condição de automação",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "won",
+            "lost",
+            "drew",
+            "not_won",
+            "played",
+            "finished",
+            "live",
+            "scheduled"
+          ],
+          "default": "won"
         }
       }
     },
@@ -1111,6 +1267,590 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/Round"
+            }
+          }
+        }
+      },
+      "TeamGroup": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "position"
+        ],
+        "properties": {
+          "id": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              }
+            ],
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "position": {
+            "type": "integer",
+            "nullable": true
+          }
+        }
+      },
+      "TeamAppearance": {
+        "type": "object",
+        "required": [
+          "type"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "standing",
+              "match"
+            ]
+          },
+          "side": {
+            "type": "string",
+            "nullable": true
+          },
+          "matchId": {
+            "type": "integer",
+            "nullable": true
+          },
+          "round": {
+            "type": "integer",
+            "nullable": true
+          },
+          "groupId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              }
+            ],
+            "nullable": true
+          },
+          "groupName": {
+            "type": "string",
+            "nullable": true
+          },
+          "position": {
+            "type": "integer",
+            "nullable": true
+          }
+        }
+      },
+      "TeamSearchResult": {
+        "type": "object",
+        "required": [
+          "team",
+          "score",
+          "matchedBy",
+          "standing",
+          "groups",
+          "appearances"
+        ],
+        "properties": {
+          "team": {
+            "$ref": "#/components/schemas/Team"
+          },
+          "score": {
+            "type": "integer"
+          },
+          "matchedBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "standing": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TableEntry"
+              }
+            ],
+            "nullable": true
+          },
+          "groups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TeamGroup"
+            }
+          },
+          "appearances": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TeamAppearance"
+            }
+          }
+        }
+      },
+      "TeamSearchResponse": {
+        "type": "object",
+        "required": [
+          "competition",
+          "grouped",
+          "query",
+          "teams"
+        ],
+        "properties": {
+          "competition": {
+            "$ref": "#/components/schemas/CompetitionMetadata"
+          },
+          "grouped": {
+            "type": "boolean"
+          },
+          "query": {
+            "type": "string",
+            "nullable": true
+          },
+          "teams": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TeamSearchResult"
+            }
+          }
+        }
+      },
+      "CurrentRoundSummary": {
+        "type": "object",
+        "required": [
+          "rounds",
+          "numbers"
+        ],
+        "properties": {
+          "rounds": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CurrentRoundSummaryItem"
+            }
+          },
+          "numbers": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          }
+        }
+      },
+      "CurrentRoundSummaryItem": {
+        "type": "object",
+        "required": [
+          "id",
+          "groupId",
+          "groupName",
+          "number",
+          "total",
+          "label",
+          "matches"
+        ],
+        "properties": {
+          "id": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              }
+            ],
+            "nullable": true
+          },
+          "groupId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              }
+            ],
+            "nullable": true
+          },
+          "groupName": {
+            "type": "string",
+            "nullable": true
+          },
+          "number": {
+            "type": "integer",
+            "nullable": true
+          },
+          "total": {
+            "type": "integer",
+            "nullable": true
+          },
+          "label": {
+            "type": "string",
+            "nullable": true
+          },
+          "matches": {
+            "type": "integer"
+          }
+        }
+      },
+      "TeamScore": {
+        "type": "object",
+        "required": [
+          "team",
+          "opponent",
+          "home",
+          "away",
+          "penalties"
+        ],
+        "properties": {
+          "team": {
+            "type": "integer",
+            "nullable": true
+          },
+          "opponent": {
+            "type": "integer",
+            "nullable": true
+          },
+          "home": {
+            "type": "integer",
+            "nullable": true
+          },
+          "away": {
+            "type": "integer",
+            "nullable": true
+          },
+          "penalties": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PenaltyScore"
+              }
+            ],
+            "nullable": true
+          }
+        }
+      },
+      "TeamMatch": {
+        "type": "object",
+        "required": [
+          "id",
+          "round",
+          "status",
+          "finished",
+          "live",
+          "scheduled",
+          "side",
+          "team",
+          "opponent",
+          "score",
+          "outcome",
+          "won",
+          "lost",
+          "drew"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "groupId": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              }
+            ],
+            "nullable": true
+          },
+          "groupName": {
+            "type": "string",
+            "nullable": true
+          },
+          "round": {
+            "type": "integer",
+            "nullable": true
+          },
+          "totalRounds": {
+            "type": "integer",
+            "nullable": true
+          },
+          "dateTime": {
+            "type": "string",
+            "nullable": true
+          },
+          "date": {
+            "type": "string",
+            "nullable": true
+          },
+          "time": {
+            "type": "string",
+            "nullable": true
+          },
+          "started": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "scheduled",
+              "live",
+              "finished"
+            ]
+          },
+          "statusCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "finished": {
+            "type": "boolean"
+          },
+          "live": {
+            "type": "boolean"
+          },
+          "scheduled": {
+            "type": "boolean"
+          },
+          "venue": {
+            "type": "string",
+            "nullable": true
+          },
+          "side": {
+            "type": "string",
+            "enum": [
+              "home",
+              "away"
+            ]
+          },
+          "team": {
+            "$ref": "#/components/schemas/Team"
+          },
+          "opponent": {
+            "$ref": "#/components/schemas/Team"
+          },
+          "score": {
+            "$ref": "#/components/schemas/TeamScore"
+          },
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "win",
+              "loss",
+              "draw"
+            ],
+            "nullable": true
+          },
+          "scoreState": {
+            "type": "string",
+            "enum": [
+              "winning",
+              "losing",
+              "drawing"
+            ],
+            "nullable": true
+          },
+          "won": {
+            "type": "boolean"
+          },
+          "lost": {
+            "type": "boolean"
+          },
+          "drew": {
+            "type": "boolean"
+          },
+          "coverage": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Coverage"
+              }
+            ],
+            "nullable": true
+          }
+        }
+      },
+      "TeamSnapshot": {
+        "type": "object",
+        "required": [
+          "competition",
+          "grouped",
+          "team",
+          "matchedBy",
+          "standing",
+          "groups",
+          "currentRound",
+          "matches",
+          "automation"
+        ],
+        "properties": {
+          "competition": {
+            "$ref": "#/components/schemas/CompetitionMetadata"
+          },
+          "grouped": {
+            "type": "boolean"
+          },
+          "team": {
+            "$ref": "#/components/schemas/Team"
+          },
+          "matchedBy": {
+            "type": "string",
+            "nullable": true
+          },
+          "standing": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TableEntry"
+              }
+            ],
+            "nullable": true
+          },
+          "groups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TeamGroup"
+            }
+          },
+          "currentRound": {
+            "$ref": "#/components/schemas/CurrentRoundSummary"
+          },
+          "matches": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TeamMatch"
+            }
+          },
+          "automation": {
+            "type": "object",
+            "required": [
+              "supportedConditions"
+            ],
+            "properties": {
+              "supportedConditions": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "Trigger": {
+        "type": "object",
+        "required": [
+          "condition",
+          "shouldFire",
+          "state",
+          "reason",
+          "matchedMatches"
+        ],
+        "properties": {
+          "condition": {
+            "type": "string"
+          },
+          "shouldFire": {
+            "type": "boolean"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "triggered",
+              "pending",
+              "not_satisfied",
+              "no_match"
+            ]
+          },
+          "reason": {
+            "type": "string"
+          },
+          "matchedMatches": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TriggerMatch"
+            }
+          }
+        }
+      },
+      "TriggerMatch": {
+        "type": "object",
+        "required": [
+          "id",
+          "round",
+          "groupName",
+          "opponent",
+          "status",
+          "outcome",
+          "score"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "round": {
+            "type": "integer",
+            "nullable": true
+          },
+          "groupName": {
+            "type": "string",
+            "nullable": true
+          },
+          "opponent": {
+            "$ref": "#/components/schemas/Team"
+          },
+          "status": {
+            "type": "string"
+          },
+          "outcome": {
+            "type": "string",
+            "nullable": true
+          },
+          "score": {
+            "$ref": "#/components/schemas/TeamScore"
+          }
+        }
+      },
+      "TriggerResponse": {
+        "type": "object",
+        "required": [
+          "competition",
+          "grouped",
+          "team",
+          "standing",
+          "currentRound",
+          "condition",
+          "trigger",
+          "matches"
+        ],
+        "properties": {
+          "competition": {
+            "$ref": "#/components/schemas/CompetitionMetadata"
+          },
+          "grouped": {
+            "type": "boolean"
+          },
+          "team": {
+            "$ref": "#/components/schemas/Team"
+          },
+          "standing": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TableEntry"
+              }
+            ],
+            "nullable": true
+          },
+          "currentRound": {
+            "$ref": "#/components/schemas/CurrentRoundSummary"
+          },
+          "condition": {
+            "type": "string"
+          },
+          "trigger": {
+            "$ref": "#/components/schemas/Trigger"
+          },
+          "matches": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TeamMatch"
             }
           }
         }

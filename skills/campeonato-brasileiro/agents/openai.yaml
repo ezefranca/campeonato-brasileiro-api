@@ -1,0 +1,12 @@
+interface:
+  display_name: "Campeonato Brasileiro"
+  short_description: "Brasileirão standings and match automation"
+  default_prompt: "Use $campeonato-brasileiro to check whether Flamengo won and summarize the current Brasileirão context."
+dependencies:
+  tools:
+    - type: "mcp"
+      value: "campeonato-brasileiro"
+      description: "Local MCP server shipped by campeonato-brasileiro-api for standings, matches, team snapshots, and trigger checks."
+      transport: "stdio"
+policy:
+  allow_implicit_invocation: true

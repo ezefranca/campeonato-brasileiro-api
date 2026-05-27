@@ -1,16 +1,41 @@
 {
   "name": "campeonato-brasileiro-api",
-  "version": "2.0.1",
+  "version": "2.1.0",
   "description": "API moderna para consultar classificação e rodada atual das Séries A, B, C e D do Brasileirão",
   "main": "./index.js",
+  "files": [
+    "index.js",
+    "index.mjs",
+    "bin/",
+    "lib/",
+    "mcp/",
+    "docs/",
+    "skills/",
+    "examples/",
+    "AGENTS.md",
+    "CLAUDE.md",
+    ".claude/commands/"
+  ],
+  "bin": {
+    "campeonato-brasileiro": "./bin/campeonato-brasileiro.js",
+    "campeonato-brasileiro-api": "./bin/campeonato-brasileiro.js",
+    "brasileirao": "./bin/campeonato-brasileiro.js",
+    "campeonato-brasileiro-mcp": "./bin/campeonato-brasileiro-mcp.js"
+  },
   "exports": {
     ".": {
       "require": "./index.js",
       "import": "./index.mjs"
+    },
+    "./mcp": {
+      "require": "./mcp/server.js",
+      "import": "./mcp/server.js"
     }
   },
   "scripts": {
     "test": "node --test",
+    "cli": "node bin/campeonato-brasileiro.js",
+    "mcp": "node bin/campeonato-brasileiro-mcp.js",
     "demo": "node examples/demo/server.js",
     "demo:live": "node examples/demo/server.js",
     "demo:fixtures": "node examples/demo/run-fixtures.js"
@@ -28,7 +53,13 @@
     "serie c",
     "serie d",
     "futebol",
-    "soccer"
+    "soccer",
+    "cli",
+    "mcp",
+    "agent",
+    "codex",
+    "claude",
+    "automation"
   ],
   "author": "Ezequiel França",
   "license": "MIT",
@@ -38,5 +69,9 @@
   "homepage": "https://github.com/ezefranca/campeonato-brasileiro-api#readme",
   "engines": {
     "node": ">=18"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "zod": "^4.4.3"
   }
 }

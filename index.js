@@ -51,6 +51,17 @@ const STATUS_BY_BROADCAST = Object.freeze({
   EM_ANDAMENTO: 'live'
 });
 
+const TEAM_RESULT_CONDITIONS = Object.freeze([
+  'won',
+  'lost',
+  'drew',
+  'not_won',
+  'played',
+  'finished',
+  'live',
+  'scheduled'
+]);
+
 class BrasileiroApiError extends Error {
   constructor(code, message, details) {
     super(message);
@@ -127,6 +138,83 @@ async function getRounds(serie, options = {}) {
 
 async function getCurrentRound(serie, options = {}) {
   return getRounds(serie, options);
+}
+
+async function findTeams(serie, queryOrOptions, maybeOptions) {
+  let query = null;
+  let options = {};
+
+  if (isPlainObject(queryOrOptions)) {
+    options = queryOrOptions;
+  } else {
+    query = queryOrOptions == null ? null : String(queryOrOptions);
+    options = maybeOptions || {};
+  }
+
+  const competition = scopeCompetitionByGroup(
+    await getCompetition(serie, options),
+    options.group
+  );
+  const teams = rankTeamRecords(collectTeamRecords(competition), query);
+
+  return {
+    competition: competition.competition,
+    grouped: competition.grouped,
+    query,
+    teams: teams.map(toTeamSearchResult)
+  };
+}
+
+async function getTeamSnapshot(serie, team, options = {}) {
+  const competition = scopeCompetitionByGroup(
+    await getCompetition(serie, options),
+    options.group
+  );
+  const selected = selectTeamRecord(competition, team);
+  const matches = collectTeamMatches(competition, selected.team);
+
+  return {
+    competition: competition.competition,
+    grouped: competition.grouped,
+    team: selected.team,
+    matchedBy: selected.matchedBy,
+    standing: selected.standing,
+    groups: selected.groups,
+    currentRound: summarizeCurrentRound(competition.rounds),
+    matches,
+    automation: {
+      supportedConditions: TEAM_RESULT_CONDITIONS
+    }
+  };
+}
+
+async function checkTeamResult(serie, team, conditionOrOptions, maybeOptions) {
+  let condition = 'won';
+  let options = {};
+
+  if (isPlainObject(conditionOrOptions)) {
+    options = conditionOrOptions;
+    condition = options.condition || condition;
+  } else {
+    condition = conditionOrOptions == null ? condition : conditionOrOptions;
+    options = maybeOptions || {};
+  }
+
+  condition = normalizeTeamResultCondition(condition);
+
+  const snapshot = await getTeamSnapshot(serie, team, options);
+  const trigger = evaluateTeamCondition(snapshot.matches, condition);
+
+  return {
+    competition: snapshot.competition,
+    grouped: snapshot.grouped,
+    team: snapshot.team,
+    standing: snapshot.standing,
+    currentRound: snapshot.currentRound,
+    condition,
+    trigger,
+    matches: snapshot.matches
+  };
 }
 
 async function tabela(serie, options = {}) {
@@ -653,6 +741,509 @@ function selectGroup(collection, group) {
   return selected;
 }
 
+function scopeCompetitionByGroup(competition, group) {
+  if (group == null) {
+    return competition;
+  }
+
+  const table = selectGroup(competition.tables, group);
+  const round = selectGroup(competition.rounds, group);
+  const rounds = [round];
+
+  return {
+    ...competition,
+    tables: [table],
+    rounds,
+    matches: rounds.flatMap((entry) => entry.matches)
+  };
+}
+
+function collectTeamRecords(competition) {
+  const records = new Map();
+
+  for (const table of competition.tables || []) {
+    for (const entry of table.entries || []) {
+      addTeamRecord(records, entry.team, {
+        type: 'standing',
+        groupId: table.id ?? null,
+        groupName: table.name ?? null,
+        position: entry.position
+      }, entry);
+    }
+  }
+
+  for (const round of competition.rounds || []) {
+    for (const match of round.matches || []) {
+      addTeamRecord(records, match.homeTeam, {
+        type: 'match',
+        side: 'home',
+        matchId: match.id,
+        round: match.round,
+        groupId: match.groupId ?? round.groupId ?? null,
+        groupName: match.groupName ?? round.groupName ?? null
+      });
+      addTeamRecord(records, match.awayTeam, {
+        type: 'match',
+        side: 'away',
+        matchId: match.id,
+        round: match.round,
+        groupId: match.groupId ?? round.groupId ?? null,
+        groupName: match.groupName ?? round.groupName ?? null
+      });
+    }
+  }
+
+  return [...records.values()];
+}
+
+function addTeamRecord(records, team, appearance, standing = null) {
+  if (!team || (team.id == null && !team.name && !team.shortName)) {
+    return;
+  }
+
+  const key = teamRecordKey(team);
+  let record = records.get(key);
+
+  if (!record) {
+    record = {
+      team: { ...team },
+      standing: null,
+      groups: [],
+      appearances: []
+    };
+    records.set(key, record);
+  } else {
+    record.team = mergeTeam(record.team, team);
+  }
+
+  record.appearances.push(appearance);
+
+  if (standing) {
+    record.standing = standing;
+    addUniqueGroup(record.groups, {
+      id: appearance.groupId ?? null,
+      name: appearance.groupName ?? null,
+      position: standing.position
+    });
+  }
+}
+
+function mergeTeam(current, next) {
+  return {
+    id: current.id ?? next.id ?? null,
+    name: current.name || next.name || null,
+    shortName: current.shortName || next.shortName || null,
+    badge: current.badge || next.badge || null
+  };
+}
+
+function addUniqueGroup(groups, group) {
+  const key = `${group.id ?? ''}:${group.name ?? ''}`;
+
+  if (!groups.some((entry) => `${entry.id ?? ''}:${entry.name ?? ''}` === key)) {
+    groups.push(group);
+  }
+}
+
+function teamRecordKey(team) {
+  if (team.id != null) {
+    return `id:${team.id}`;
+  }
+
+  return `team:${normalizeKey(team.name || team.shortName)}:${normalizeKey(team.shortName || '')}`;
+}
+
+function rankTeamRecords(records, query) {
+  return records
+    .map((record) => ({
+      ...record,
+      ...scoreTeamRecord(record, query)
+    }))
+    .filter((record) => query == null || record.score > 0)
+    .sort((left, right) => {
+      if (right.score !== left.score) {
+        return right.score - left.score;
+      }
+
+      const leftPosition = left.standing?.position ?? Number.MAX_SAFE_INTEGER;
+      const rightPosition = right.standing?.position ?? Number.MAX_SAFE_INTEGER;
+
+      if (leftPosition !== rightPosition) {
+        return leftPosition - rightPosition;
+      }
+
+      return String(left.team.name || '').localeCompare(String(right.team.name || ''));
+    });
+}
+
+function scoreTeamRecord(record, query) {
+  if (query == null || String(query).trim() === '') {
+    return {
+      score: 1,
+      matchedBy: 'all'
+    };
+  }
+
+  const wantedRaw = String(query).trim();
+  const wanted = normalizeKey(wantedRaw);
+
+  if (record.team.id != null && String(record.team.id) === wantedRaw) {
+    return {
+      score: 100,
+      matchedBy: 'id'
+    };
+  }
+
+  const names = [
+    ['name', record.team.name],
+    ['shortName', record.team.shortName]
+  ].filter(([, value]) => value);
+
+  for (const [field, value] of names) {
+    const key = normalizeKey(value);
+
+    if (key === wanted) {
+      return {
+        score: field === 'name' ? 95 : 90,
+        matchedBy: field
+      };
+    }
+  }
+
+  for (const [field, value] of names) {
+    const key = normalizeKey(value);
+
+    if (key.startsWith(wanted)) {
+      return {
+        score: field === 'name' ? 85 : 80,
+        matchedBy: `${field}:prefix`
+      };
+    }
+  }
+
+  for (const [field, value] of names) {
+    const key = normalizeKey(value);
+
+    if (key.includes(wanted) || (wanted.length > 2 && wanted.includes(key))) {
+      return {
+        score: field === 'name' ? 70 : 65,
+        matchedBy: `${field}:partial`
+      };
+    }
+  }
+
+  return {
+    score: 0,
+    matchedBy: null
+  };
+}
+
+function toTeamSearchResult(record) {
+  return {
+    team: record.team,
+    score: record.score,
+    matchedBy: record.matchedBy,
+    standing: record.standing,
+    groups: record.groups,
+    appearances: record.appearances
+  };
+}
+
+function selectTeamRecord(competition, team) {
+  if (team == null || String(team).trim() === '') {
+    throw new BrasileiroApiError(
+      'INVALID_TEAM',
+      'A team name, acronym or id is required.'
+    );
+  }
+
+  const records = collectTeamRecords(competition);
+  const ranked = rankTeamRecords(records, team);
+
+  if (ranked.length === 0) {
+    throw new BrasileiroApiError(
+      'TEAM_NOT_FOUND',
+      `Team "${team}" was not found in the current competition payload.`,
+      {
+        received: team,
+        availableTeams: records.map((record) => record.team)
+      }
+    );
+  }
+
+  return ranked[0];
+}
+
+function collectTeamMatches(competition, team) {
+  const matches = [];
+
+  for (const round of competition.rounds || []) {
+    for (const match of round.matches || []) {
+      const summary = summarizeTeamMatch(match, team, round);
+
+      if (summary) {
+        matches.push(summary);
+      }
+    }
+  }
+
+  return matches;
+}
+
+function summarizeTeamMatch(match, team, round) {
+  const side = identifyTeamSide(match, team);
+
+  if (!side) {
+    return null;
+  }
+
+  const isHome = side === 'home';
+  const selectedTeam = isHome ? match.homeTeam : match.awayTeam;
+  const opponent = isHome ? match.awayTeam : match.homeTeam;
+  const teamScore = isHome ? match.score.home : match.score.away;
+  const opponentScore = isHome ? match.score.away : match.score.home;
+  const scoreComparison = compareTeamScore(teamScore, opponentScore);
+  const finalOutcome = match.status === 'finished' ? scoreComparison : null;
+
+  return {
+    id: match.id,
+    groupId: match.groupId ?? round.groupId ?? null,
+    groupName: match.groupName ?? round.groupName ?? null,
+    round: match.round ?? round.number ?? null,
+    totalRounds: match.totalRounds ?? round.total ?? null,
+    dateTime: match.dateTime,
+    date: match.date,
+    time: match.time,
+    started: match.started,
+    status: match.status,
+    statusCode: match.statusCode,
+    finished: match.status === 'finished',
+    live: match.status === 'live',
+    scheduled: match.status === 'scheduled',
+    venue: match.venue,
+    side,
+    team: selectedTeam,
+    opponent,
+    score: {
+      team: teamScore,
+      opponent: opponentScore,
+      home: match.score.home,
+      away: match.score.away,
+      penalties: match.score.penalties
+    },
+    outcome: finalOutcome,
+    scoreState: scoreComparison == null ? null : toScoreState(scoreComparison),
+    won: finalOutcome === 'win',
+    lost: finalOutcome === 'loss',
+    drew: finalOutcome === 'draw',
+    coverage: match.coverage
+  };
+}
+
+function identifyTeamSide(match, team) {
+  if (teamsAreSame(match.homeTeam, team)) {
+    return 'home';
+  }
+
+  if (teamsAreSame(match.awayTeam, team)) {
+    return 'away';
+  }
+
+  return null;
+}
+
+function teamsAreSame(left, right) {
+  if (!left || !right) {
+    return false;
+  }
+
+  if (left.id != null && right.id != null && String(left.id) === String(right.id)) {
+    return true;
+  }
+
+  const leftNames = [left.name, left.shortName].filter(Boolean).map(normalizeKey);
+  const rightNames = [right.name, right.shortName].filter(Boolean).map(normalizeKey);
+
+  return leftNames.some((leftName) => rightNames.includes(leftName));
+}
+
+function compareTeamScore(teamScore, opponentScore) {
+  if (teamScore == null || opponentScore == null) {
+    return null;
+  }
+
+  if (teamScore > opponentScore) {
+    return 'win';
+  }
+
+  if (teamScore < opponentScore) {
+    return 'loss';
+  }
+
+  return 'draw';
+}
+
+function toScoreState(comparison) {
+  switch (comparison) {
+    case 'win':
+      return 'winning';
+    case 'loss':
+      return 'losing';
+    case 'draw':
+      return 'drawing';
+    default:
+      return null;
+  }
+}
+
+function summarizeCurrentRound(rounds) {
+  return {
+    rounds: rounds.map((round) => ({
+      id: round.id,
+      groupId: round.groupId,
+      groupName: round.groupName,
+      number: round.number,
+      total: round.total,
+      label: round.label,
+      matches: round.matches.length
+    })),
+    numbers: [...new Set(rounds.map((round) => round.number).filter((number) => number != null))]
+  };
+}
+
+function normalizeTeamResultCondition(condition) {
+  const key = normalizeKey(condition);
+
+  switch (key) {
+    case 'won':
+    case 'win':
+    case 'wins':
+    case 'venceu':
+    case 'vitoria':
+      return 'won';
+    case 'lost':
+    case 'loss':
+    case 'lose':
+    case 'perdeu':
+    case 'derrota':
+      return 'lost';
+    case 'drew':
+    case 'draw':
+    case 'drawn':
+    case 'empatou':
+    case 'empate':
+      return 'drew';
+    case 'notwon':
+    case 'notwin':
+    case 'naovenceu':
+    case 'semvitoria':
+      return 'not_won';
+    case 'played':
+    case 'started':
+    case 'jogou':
+      return 'played';
+    case 'finished':
+    case 'ended':
+    case 'encerrada':
+    case 'encerrado':
+      return 'finished';
+    case 'live':
+    case 'aovivo':
+    case 'emandamento':
+      return 'live';
+    case 'scheduled':
+    case 'fixture':
+    case 'prejogo':
+    case 'predia':
+    case 'agendado':
+      return 'scheduled';
+    default:
+      throw new BrasileiroApiError(
+        'INVALID_CONDITION',
+        'Unsupported condition. Use one of: won, lost, drew, not_won, played, finished, live or scheduled.',
+        {
+          received: condition,
+          supported: TEAM_RESULT_CONDITIONS
+        }
+      );
+  }
+}
+
+function evaluateTeamCondition(matches, condition) {
+  const matchedMatches = matches.filter((match) => teamMatchSatisfiesCondition(match, condition));
+  const shouldFire = matchedMatches.length > 0;
+  const hasPendingMatches = matches.some((match) => teamMatchCouldStillSatisfyCondition(match, condition));
+
+  let state = 'not_satisfied';
+  let reason = `No current match satisfies "${condition}".`;
+
+  if (shouldFire) {
+    state = 'triggered';
+    reason = `At least one current match satisfies "${condition}".`;
+  } else if (matches.length === 0) {
+    state = 'no_match';
+    reason = 'The team does not appear in the current round payload.';
+  } else if (hasPendingMatches) {
+    state = 'pending';
+    reason = `At least one current match is not settled for "${condition}" yet.`;
+  }
+
+  return {
+    condition,
+    shouldFire,
+    state,
+    reason,
+    matchedMatches: matchedMatches.map((match) => ({
+      id: match.id,
+      round: match.round,
+      groupName: match.groupName,
+      opponent: match.opponent,
+      status: match.status,
+      outcome: match.outcome,
+      score: match.score
+    }))
+  };
+}
+
+function teamMatchSatisfiesCondition(match, condition) {
+  switch (condition) {
+    case 'won':
+      return match.outcome === 'win';
+    case 'lost':
+      return match.outcome === 'loss';
+    case 'drew':
+      return match.outcome === 'draw';
+    case 'not_won':
+      return match.finished && match.outcome !== 'win';
+    case 'played':
+      return match.started || match.live || match.finished;
+    case 'finished':
+      return match.finished;
+    case 'live':
+      return match.live;
+    case 'scheduled':
+      return match.scheduled;
+    default:
+      return false;
+  }
+}
+
+function teamMatchCouldStillSatisfyCondition(match, condition) {
+  if (teamMatchSatisfiesCondition(match, condition)) {
+    return false;
+  }
+
+  if (condition === 'scheduled') {
+    return false;
+  }
+
+  if (condition === 'live') {
+    return match.scheduled;
+  }
+
+  return match.scheduled || match.live;
+}
+
 function ensureRoundIsAvailable(rounds, requestedRound) {
   if (requestedRound == null || Number.isNaN(requestedRound)) {
     return;
@@ -741,6 +1332,10 @@ const api = {
   getGroups,
   getRounds,
   getCurrentRound,
+  findTeams,
+  getTeamSnapshot,
+  checkTeamResult,
+  TEAM_RESULT_CONDITIONS,
   tabela,
   rodadaAtual
 };

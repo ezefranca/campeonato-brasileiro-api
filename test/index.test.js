@@ -3,8 +3,12 @@ const assert = require('node:assert/strict');
 const { readFileSync } = require('node:fs');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
+const { Client } = require('@modelcontextprotocol/sdk/client/index.js');
+const { InMemoryTransport } = require('@modelcontextprotocol/sdk/inMemory.js');
 
 const api = require('../index.js');
+const cli = require('../lib/cli.js');
+const { createMcpServer } = require('../mcp/server.js');
 
 function fixture(name) {
   return readFileSync(path.join(__dirname, 'fixtures', name), 'utf8');
@@ -94,6 +98,81 @@ test('legacy tabela and rodadaAtual helpers still work', async () => {
   assert.equal(round[0].placarVisitante, 2);
 });
 
+test('team helpers expose agent-friendly snapshots and triggers', async () => {
+  const teams = await api.findTeams('a', 'fla', { html: fixtures.a });
+  const snapshot = await api.getTeamSnapshot('a', 'Athletico', { html: fixtures.a });
+  const trigger = await api.checkTeamResult('a', 'Athletico', 'won', { html: fixtures.a });
+  const pending = await api.checkTeamResult('b', 'Athletic', 'won', { html: fixtures.b });
+
+  assert.equal(teams.teams[0].team.name, 'Flamengo');
+  assert.equal(teams.teams[0].matchedBy, 'shortName');
+  assert.equal(snapshot.matches[0].opponent.name, 'Vitória');
+  assert.equal(snapshot.matches[0].outcome, 'win');
+  assert.equal(trigger.trigger.shouldFire, true);
+  assert.equal(trigger.trigger.state, 'triggered');
+  assert.equal(pending.trigger.shouldFire, false);
+  assert.equal(pending.trigger.state, 'pending');
+});
+
+test('CLI returns JSON for automation triggers and supports exit-code mode', async () => {
+  const trigger = await cli.run([
+    'trigger',
+    'a',
+    'Athletico',
+    '--html',
+    'test/fixtures/serie-a.html',
+    '--json'
+  ], {
+    cwd: path.join(__dirname, '..')
+  });
+  const notTriggered = await cli.run([
+    'trigger',
+    'a',
+    'Botafogo',
+    '--html',
+    'test/fixtures/serie-a.html',
+    '--exit-code',
+    '--json'
+  ], {
+    cwd: path.join(__dirname, '..')
+  });
+
+  assert.equal(trigger.exitCode, 0);
+  assert.equal(JSON.parse(trigger.stdout).trigger.shouldFire, true);
+  assert.equal(notTriggered.exitCode, 2);
+  assert.equal(JSON.parse(notTriggered.stdout).trigger.shouldFire, false);
+});
+
+test('MCP server exposes tools with structured trigger content', async () => {
+  const server = createMcpServer();
+  const client = new Client({ name: 'campeonato-brasileiro-api-test', version: '1.0.0' });
+  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+
+  await Promise.all([
+    server.connect(serverTransport),
+    client.connect(clientTransport)
+  ]);
+
+  try {
+    const tools = await client.listTools();
+    const trigger = await client.callTool({
+      name: 'brasileirao_check_team_trigger',
+      arguments: {
+        serie: 'a',
+        team: 'Athletico',
+        html: fixtures.a
+      }
+    });
+
+    assert.ok(tools.tools.some((tool) => tool.name === 'brasileirao_check_team_trigger'));
+    assert.equal(trigger.structuredContent.trigger.shouldFire, true);
+    assert.match(trigger.content[0].text, /FIRE/);
+  } finally {
+    await client.close();
+    await server.close();
+  }
+});
+
 test('requesting a non-current round fails with a clear error', async () => {
   await assert.rejects(
     api.rodadaAtual('a', 12, { html: fixtures.a }),
@@ -118,6 +197,8 @@ test('the ESM entrypoint re-exports the same public API', async () => {
   const esm = await import(pathToFileURL(path.join(__dirname, '..', 'index.mjs')).href);
 
   assert.equal(typeof esm.getCompetition, 'function');
+  assert.equal(typeof esm.getTeamSnapshot, 'function');
+  assert.equal(typeof esm.checkTeamResult, 'function');
   assert.equal(typeof esm.tabela, 'function');
   assert.equal(esm.SUPPORTED_SERIES.length, 4);
 });
@@ -127,11 +208,14 @@ test('the OpenAPI reference spec is valid JSON and documents the main routes', (
   const spec = JSON.parse(readFileSync(specPath, 'utf8'));
 
   assert.equal(spec.openapi, '3.0.3');
-  assert.equal(spec.info.version, '2.0.1');
+  assert.equal(spec.info.version, '2.1.0');
   assert.ok(spec.paths['/series']);
   assert.ok(spec.paths['/competitions/{serie}']);
   assert.ok(spec.paths['/competitions/{serie}/standings']);
   assert.ok(spec.paths['/competitions/{serie}/rounds']);
+  assert.ok(spec.paths['/competitions/{serie}/teams']);
+  assert.ok(spec.paths['/competitions/{serie}/teams/{team}']);
+  assert.ok(spec.paths['/competitions/{serie}/teams/{team}/trigger']);
   assert.ok(spec.paths['/legacy/{serie}/tabela']);
   assert.ok(spec.paths['/legacy/{serie}/rodada-atual']);
 });

@@ -5,17 +5,153 @@
 
 API moderna para consultar classificação e rodada atual das Séries A, B, C e D do Brasileirão.
 
+Além da biblioteca JavaScript, o pacote agora inclui:
+
+- CLI para humanos, scripts e cron jobs
+- servidor MCP para Codex, Claude, Cursor e outros agentes
+- Skill Codex em `skills/campeonato-brasileiro/`
+- helpers de automação para perguntas como "me avise quando o Corinthians venceu"
+
 ## Compatibilidade
 
 - Node.js `18+`
-- Sem dependências de runtime
 - Compatível com `require()` e `import`
+- CLI e MCP empacotados no mesmo pacote
+- MCP implementado com o SDK oficial `@modelcontextprotocol/sdk`
 
 ## Instalação
 
 ```bash
 npm install campeonato-brasileiro-api
 ```
+
+Para usar como comando global:
+
+```bash
+npm install -g campeonato-brasileiro-api
+```
+
+Binários disponíveis:
+
+- `campeonato-brasileiro`
+- `campeonato-brasileiro-api`
+- `brasileirao`
+- `campeonato-brasileiro-mcp`
+
+## CLI
+
+Tabela para humanos:
+
+```bash
+campeonato-brasileiro standings a
+```
+
+JSON para automações e agentes:
+
+```bash
+campeonato-brasileiro standings a --json
+campeonato-brasileiro rounds b --json
+campeonato-brasileiro teams a Flamengo --json
+campeonato-brasileiro team a Corinthians --json
+campeonato-brasileiro trigger a Flamengo --condition won --json
+```
+
+Gatilho com exit code para shell scripts:
+
+```bash
+campeonato-brasileiro trigger a Flamengo --condition won --exit-code --json
+```
+
+O exit code é `0` quando o gatilho dispara e `2` quando não dispara.
+
+Série D com grupo:
+
+```bash
+campeonato-brasileiro standings d --group A1 --json
+campeonato-brasileiro trigger d "XV de Piracicaba" --group A14 --condition live --json
+```
+
+Formatos:
+
+- `--format table` padrão para terminal
+- `--format markdown`
+- `--json`
+- `--compact`
+
+Fonte customizada/offline:
+
+```bash
+campeonato-brasileiro standings a --html ./serie-a.html --json
+campeonato-brasileiro standings a --url https://ge.globo.com/futebol/brasileirao-serie-a/ --json
+```
+
+## MCP para agentes
+
+Iniciar servidor stdio:
+
+```bash
+campeonato-brasileiro mcp
+```
+
+ou:
+
+```bash
+campeonato-brasileiro-mcp
+```
+
+Configuração compatível com Claude Desktop/Codex:
+
+```json
+{
+  "mcpServers": {
+    "campeonato-brasileiro": {
+      "command": "npx",
+      "args": ["-y", "campeonato-brasileiro-api", "mcp"]
+    }
+  }
+}
+```
+
+Ferramentas MCP:
+
+| Tool | Descrição |
+| --- | --- |
+| `brasileirao_list_series` | Lista séries suportadas |
+| `brasileirao_get_competition` | Payload completo normalizado |
+| `brasileirao_get_standings` | Classificação e legendas |
+| `brasileirao_get_rounds` | Rodada atual e jogos |
+| `brasileirao_find_teams` | Busca times por nome, sigla ou id |
+| `brasileirao_get_team_snapshot` | Visão centrada em um time |
+| `brasileirao_check_team_trigger` | Gatilho booleano para automações |
+
+Recursos MCP:
+
+- `brasileirao://guide`
+- `brasileirao://series`
+- `brasileirao://openapi`
+- `brasileirao://standings/{serie}`
+
+Prompt MCP:
+
+- `brasileirao_automation_planner`
+
+## Skill e agentes
+
+O pacote inclui uma Skill Codex versionada no repositório:
+
+```text
+skills/campeonato-brasileiro/
+```
+
+Use em prompts:
+
+```text
+Use $campeonato-brasileiro to build a workflow that notifies me when Flamengo wins.
+```
+
+Também há documentação para agentes em [docs/agents.md](docs/agents.md), além de instruções em `AGENTS.md`, `CLAUDE.md` e `.claude/commands/brasileirao.md`.
+
+Regra operacional importante: o pacote informa o estado do futebol. A ação externa, como mandar mensagem, reservar hotel, comprar ingresso ou atualizar calendário, deve ser feita pelo agente/workflow chamador depois de verificar permissões.
 
 ## Demo local
 
@@ -56,6 +192,9 @@ npm run demo:fixtures
 | `getGroups(serie, options?)` | Retorna os grupos da Série D |
 | `getRounds(serie, options?)` | Retorna a rodada atual normalizada |
 | `getCurrentRound(serie, options?)` | Alias de `getRounds()` |
+| `findTeams(serie, query?, options?)` | Busca times por nome, sigla ou id |
+| `getTeamSnapshot(serie, team, options?)` | Retorna classificação e jogos atuais de um time |
+| `checkTeamResult(serie, team, condition?, options?)` | Avalia gatilhos de automação como `won`, `lost`, `live` |
 | `tabela(serie, options?)` | Helper legado de classificação |
 | `rodadaAtual(serie, rodada?, options?)` | Helper legado de jogos da rodada |
 
@@ -418,6 +557,73 @@ const currentRound = await brasileirao.getCurrentRound('b');
 console.log(currentRound.rounds[0].number);
 ```
 
+### `findTeams(serie, query?, options?)`
+
+Busca times por nome, sigla ou id dentro da classificação e da rodada ativa.
+
+```js
+const brasileirao = require('campeonato-brasileiro-api');
+
+const result = await brasileirao.findTeams('a', 'fla');
+
+console.log(result.teams[0].team.name);     // Flamengo
+console.log(result.teams[0].matchedBy);     // shortName, name, id, etc.
+```
+
+### `getTeamSnapshot(serie, team, options?)`
+
+Retorna uma visão centrada em um time:
+
+- dados da competição
+- time resolvido
+- posição na tabela quando disponível
+- jogos do time na rodada atual
+- resultado final (`outcome`) quando o jogo terminou
+- estado parcial (`scoreState`) quando há placar disponível
+
+```js
+const brasileirao = require('campeonato-brasileiro-api');
+
+const snapshot = await brasileirao.getTeamSnapshot('a', 'Corinthians');
+
+console.log(snapshot.standing);
+console.log(snapshot.matches);
+```
+
+### `checkTeamResult(serie, team, condition?, options?)`
+
+Helper recomendado para automações.
+
+```js
+const brasileirao = require('campeonato-brasileiro-api');
+
+const result = await brasileirao.checkTeamResult('a', 'Flamengo', 'won');
+
+if (result.trigger.shouldFire) {
+  // Chame aqui seu sistema de mensagem, agenda, reserva, workflow, etc.
+}
+```
+
+Condições suportadas:
+
+- `won`
+- `lost`
+- `drew`
+- `not_won`
+- `played`
+- `finished`
+- `live`
+- `scheduled`
+
+Estados possíveis:
+
+| Estado | Significado |
+| --- | --- |
+| `triggered` | A condição foi satisfeita |
+| `pending` | Há jogo ao vivo/agendado que ainda pode satisfazer a condição |
+| `not_satisfied` | O jogo atual está definido, mas a condição é falsa |
+| `no_match` | O time não aparece na rodada ativa exposta pela fonte |
+
 ### `tabela(serie, options?)`
 
 Helper legado com shape próximo ao pacote original.
@@ -553,6 +759,9 @@ Principais códigos:
 - `GROUP_REQUIRED`
 - `GROUP_NOT_FOUND`
 - `ROUND_NOT_AVAILABLE`
+- `INVALID_TEAM`
+- `TEAM_NOT_FOUND`
+- `INVALID_CONDITION`
 
 Exemplo:
 
@@ -588,6 +797,9 @@ Rotas cobertas na spec:
 - `GET /competitions/{serie}/groups`
 - `GET /competitions/{serie}/rounds`
 - `GET /competitions/{serie}/current-round`
+- `GET /competitions/{serie}/teams`
+- `GET /competitions/{serie}/teams/{team}`
+- `GET /competitions/{serie}/teams/{team}/trigger`
 - `GET /legacy/{serie}/tabela`
 - `GET /legacy/{serie}/rodada-atual`
 
