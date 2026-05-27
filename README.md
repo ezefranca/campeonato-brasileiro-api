@@ -2,7 +2,7 @@
 
 [![npm](https://img.shields.io/npm/v/campeonato-brasileiro-api.svg)](https://www.npmjs.com/package/campeonato-brasileiro-api)
 [![npm](https://img.shields.io/npm/dt/campeonato-brasileiro-api.svg)](https://www.npmjs.com/package/campeonato-brasileiro-api)
-[![skills.sh](https://skills.sh/b/ezefranca/campeonato-brasileiro-api)](https://skills.sh/ezefranca/campeonato-brasileiro-api)
+[![skills.sh](https://img.shields.io/badge/skills.sh-campeonato--brasileiro-111827.svg)](https://github.com/ezefranca/campeonato-brasileiro-api/tree/master/skills/campeonato-brasileiro)
 
 API moderna para consultar classificação e rodada atual das Séries A, B, C e D do Brasileirão.
 
