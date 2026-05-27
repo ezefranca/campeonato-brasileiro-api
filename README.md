@@ -144,6 +144,22 @@ O pacote inclui uma Skill Codex versionada no repositório:
 skills/campeonato-brasileiro/
 ```
 
+Instalar com o `skills` CLI:
+
+```bash
+npx skills add https://github.com/ezefranca/campeonato-brasileiro-api --skill campeonato-brasileiro
+```
+
+Instalar globalmente para Codex:
+
+```bash
+npx skills add https://github.com/ezefranca/campeonato-brasileiro-api \
+  --skill campeonato-brasileiro \
+  -a codex \
+  -g \
+  -y
+```
+
 Use em prompts:
 
 ```text

@@ -184,6 +184,22 @@ The skill lives in:
 skills/campeonato-brasileiro/
 ```
 
+Install it with the `skills` CLI:
+
+```bash
+npx skills add https://github.com/ezefranca/campeonato-brasileiro-api --skill campeonato-brasileiro
+```
+
+Install globally for Codex:
+
+```bash
+npx skills add https://github.com/ezefranca/campeonato-brasileiro-api \
+  --skill campeonato-brasileiro \
+  -a codex \
+  -g \
+  -y
+```
+
 Use it explicitly:
 
 ```text

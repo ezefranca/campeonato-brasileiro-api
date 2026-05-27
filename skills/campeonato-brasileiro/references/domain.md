@@ -23,6 +23,22 @@ Portuguese aliases such as `venceu`, `derrota`, `empate`, `ao vivo` and `agendad
 
 ## CLI
 
+Install the agent skill:
+
+```bash
+npx skills add https://github.com/ezefranca/campeonato-brasileiro-api --skill campeonato-brasileiro
+```
+
+Install globally for Codex:
+
+```bash
+npx skills add https://github.com/ezefranca/campeonato-brasileiro-api \
+  --skill campeonato-brasileiro \
+  -a codex \
+  -g \
+  -y
+```
+
 Install/run:
 
 ```bash
