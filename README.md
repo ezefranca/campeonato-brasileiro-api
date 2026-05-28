@@ -20,6 +20,10 @@ Além da biblioteca JavaScript, o pacote agora inclui:
 - CLI e MCP empacotados no mesmo pacote
 - MCP implementado com o SDK oficial `@modelcontextprotocol/sdk`
 
+
+<img width="1123" height="435" alt="Screenshot 2026-05-28 at 13 09 18" src="https://github.com/user-attachments/assets/c41a221b-4647-4e71-accd-ac91b40d3408" />
+
+
 ## Instalação
 
 ```bash
