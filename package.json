@@ -1,6 +1,6 @@
 {
   "name": "campeonato-brasileiro-api",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "API moderna para consultar classificação e rodada atual das Séries A, B, C e D do Brasileirão",
   "main": "./index.js",
   "files": [
